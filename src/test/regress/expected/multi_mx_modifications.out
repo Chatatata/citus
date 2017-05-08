@@ -108,10 +108,6 @@ DELETE FROM limit_orders_mx WHERE id = 246 AND placed_at = current_timestamp::ti
 INSERT INTO limit_orders_mx VALUES (DEFAULT), (DEFAULT);
 ERROR:  cannot perform distributed planning for the given modification
 DETAIL:  Multi-row INSERTs to distributed tables are not supported.
--- INSERT ... SELECT ... FROM commands are unsupported from workers
-INSERT INTO limit_orders_mx SELECT * FROM limit_orders_mx;
-ERROR:  operation is not allowed on this node
-HINT:  Connect to the coordinator and run it again.
 -- connect back to the other node
 \c - - - :worker_1_port
 -- commands containing a CTE are unsupported

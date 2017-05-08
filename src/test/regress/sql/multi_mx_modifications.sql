@@ -79,9 +79,6 @@ DELETE FROM limit_orders_mx WHERE id = 246 AND placed_at = current_timestamp::ti
 -- commands with multiple rows are unsupported
 INSERT INTO limit_orders_mx VALUES (DEFAULT), (DEFAULT);
 
--- INSERT ... SELECT ... FROM commands are unsupported from workers
-INSERT INTO limit_orders_mx SELECT * FROM limit_orders_mx;
-
 -- connect back to the other node
 \c - - - :worker_1_port
 

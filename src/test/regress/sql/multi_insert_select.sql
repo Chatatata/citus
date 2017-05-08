@@ -116,21 +116,6 @@ WHERE
 
 \set VERBOSITY default
 
--- volatile functions should be disallowed
-INSERT INTO raw_events_second (user_id, value_1)
-SELECT
-  user_id, (random()*10)::int
-FROM
-  raw_events_first;
-
-INSERT INTO raw_events_second (user_id, value_1)
-WITH sub_cte AS (SELECT (random()*10)::int)
-SELECT
-  user_id, (SELECT * FROM sub_cte)
-FROM
-  raw_events_first;
-
-
 -- add one more row
 INSERT INTO raw_events_first (user_id, time) VALUES
                          (7, now());
@@ -517,7 +502,9 @@ INSERT INTO agg_events
   FROM
     raw_events_first;
 
--- We do not support any set operations
+-- We support set operations via the coordinator
+BEGIN;
+
 INSERT INTO
   raw_events_first(user_id)
 SELECT
@@ -526,13 +513,15 @@ FROM
   ((SELECT user_id FROM raw_events_first) UNION
    (SELECT user_id FROM raw_events_second)) as foo;
 
+ROLLBACK;
+
 -- We do not support any set operations
 INSERT INTO
   raw_events_first(user_id)
   (SELECT user_id FROM raw_events_first) INTERSECT
   (SELECT user_id FROM raw_events_first);
 
--- We do not support any set operations
+-- If the query is router plannable then it is executed via the coordinator
 INSERT INTO
   raw_events_first(user_id)
 SELECT
@@ -1389,9 +1378,6 @@ INSERT INTO raw_events_first (user_id, time, value_1, value_2, value_3, value_4)
 INSERT INTO raw_events_second SELECT * FROM test_view WHERE user_id = 17 GROUP BY 1,2,3,4,5,6;
 SELECT count(*) FROM raw_events_second;
 
--- inserting into views does not
-INSERT INTO test_view SELECT * FROM raw_events_second;
-
 -- we need this in our next test
 truncate raw_events_first;
 
@@ -1611,6 +1597,8 @@ SELECT create_distributed_table('text_table', 'part_col');
 SELECT create_distributed_table('char_table','part_col');
 SELECT create_distributed_table('table_with_starts_with_defaults', 'c');
 
+SET client_min_messages TO DEBUG;
+
 INSERT INTO text_table (part_col) 
   SELECT 
     CASE WHEN part_col = 'onder' THEN 'marco'
@@ -1628,6 +1616,9 @@ INSERT INTO text_table (part_col) SELECT part_col::text from char_table;
 INSERT INTO text_table (part_col) SELECT (part_col = 'burak') is true FROM text_table;
 INSERT INTO text_table (part_col) SELECT val FROM text_table;
 INSERT INTO text_table (part_col) SELECT val::text FROM text_table;
+
+RESET client_min_messages;
+
 insert into table_with_starts_with_defaults (b,c) select b,c FROM table_with_starts_with_defaults;
 
 -- Test on partition column without native hash function 
@@ -1650,6 +1641,148 @@ INSERT INTO raw_table VALUES(1, '11-11-1980');
 INSERT INTO summary_table SELECT time, COUNT(*) FROM raw_table GROUP BY time;
 
 SELECT * FROM summary_table;
+
+-- Test INSERT ... SELECT via coordinator
+
+-- Select from constants
+TRUNCATE raw_events_first;
+
+INSERT INTO raw_events_first (user_id, value_1)
+SELECT * FROM (VALUES (1,2), (3,4), (5,6)) AS v(int,int);
+
+SELECT user_id, value_1 FROM raw_events_first ORDER BY user_id;
+
+-- Select from local functions
+TRUNCATE raw_events_first;
+
+CREATE SEQUENCE insert_select_test_seq;
+
+SET client_min_messages TO DEBUG;
+
+INSERT INTO raw_events_first (user_id, value_1, value_2)
+SELECT
+  s, nextval('insert_select_test_seq'), (random()*10)::int
+FROM
+  generate_series(1, 5) s;
+
+SELECT user_id, value_1 FROM raw_events_first ORDER BY user_id, value_1;
+
+-- ON CONFLICT is unsupported
+INSERT INTO raw_events_first (user_id, value_1)
+SELECT s, nextval('insert_select_test_seq') FROM generate_series(1, 5) s
+ON CONFLICT DO NOTHING;
+
+-- RETURNING is unsupported
+INSERT INTO raw_events_first (user_id, value_1)
+SELECT s, nextval('insert_select_test_seq') FROM generate_series(1, 5) s
+RETURNING *;
+
+RESET client_min_messages;
+
+-- Select from local table
+TRUNCATE raw_events_first;
+
+CREATE TEMPORARY TABLE raw_events_first_local AS
+SELECT s AS u, 2*s AS v FROM generate_series(1, 5) s;
+
+INSERT INTO raw_events_first (user_id, value_1)
+SELECT u, v FROM raw_events_first_local;
+
+SELECT user_id, value_1 FROM raw_events_first ORDER BY user_id, value_1;
+
+-- Select from other distributed table with limit
+TRUNCATE raw_events_first;
+TRUNCATE raw_events_second;
+
+INSERT INTO raw_events_second (user_id, value_4)
+SELECT s, 3*s FROM generate_series (1,5) s;
+
+INSERT INTO raw_events_first (user_id, value_1)
+SELECT user_id, value_4 FROM raw_events_second LIMIT 5;
+
+SELECT user_id, value_1 FROM raw_events_first ORDER BY user_id, value_1;
+
+-- CTEs are supported in local queries
+TRUNCATE raw_events_first;
+
+WITH removed_rows AS (
+  DELETE FROM raw_events_first_local RETURNING u
+)
+INSERT INTO raw_events_first (user_id, value_1)
+WITH value AS (SELECT 1)
+SELECT * FROM removed_rows, value;
+
+SELECT user_id, value_1 FROM raw_events_first ORDER BY user_id, value_1;
+
+-- CTEs are supported in router queries
+TRUNCATE raw_events_first;
+
+WITH user_two AS (
+  SELECT user_id, value_4 FROM raw_events_second WHERE user_id = 2
+)
+INSERT INTO raw_events_first (user_id, value_1)
+SELECT * FROM user_two;
+
+SELECT user_id, value_1 FROM raw_events_first ORDER BY user_id, value_1;
+
+-- Select from distributed table into reference table
+CREATE TABLE ref_table (user_id int, value_1 int);
+SELECT create_reference_table('ref_table');
+
+INSERT INTO ref_table
+SELECT user_id, value_1 FROM raw_events_second;
+
+SELECT * FROM ref_table ORDER BY user_id, value_1;
+
+DROP TABLE ref_table;
+
+-- Select into an append-partitioned table is not supported
+CREATE TABLE insert_append_table (user_id int, value_4 bigint);
+SELECT create_distributed_table('insert_append_table', 'user_id', 'append');
+
+INSERT INTO insert_append_table (user_id, value_4)
+SELECT user_id, 1 FROM raw_events_second LIMIT 5;
+
+DROP TABLE insert_append_table;
+
+-- Insert from other distributed table as prepared statement
+TRUNCATE raw_events_first;
+
+PREPARE insert_prep(int) AS
+INSERT INTO raw_events_first (user_id, value_1)
+SELECT $1, value_4 FROM raw_events_second ORDER BY value_4 LIMIT 1;
+
+EXECUTE insert_prep(1);
+EXECUTE insert_prep(2);
+EXECUTE insert_prep(3);
+EXECUTE insert_prep(4);
+EXECUTE insert_prep(5);
+EXECUTE insert_prep(6);
+
+SELECT user_id, value_1 FROM raw_events_first ORDER BY user_id, value_1;
+
+-- Inserting into views is handled via coordinator
+TRUNCATE raw_events_first;
+
+INSERT INTO test_view
+SELECT * FROM raw_events_second;
+
+SELECT user_id, value_4 FROM test_view ORDER BY user_id, value_4;
+
+-- Drop the view now, because the column we are about to drop depends on it
+DROP VIEW test_view;
+
+-- Make sure we handle dropped columns correctly
+TRUNCATE raw_events_first;
+
+ALTER TABLE raw_events_first DROP COLUMN value_1;
+
+INSERT INTO raw_events_first (user_id, value_4)
+SELECT value_4, user_id FROM raw_events_second LIMIT 5;
+
+SELECT user_id, value_4 FROM raw_events_first ORDER BY user_id;
+
+RESET client_min_messages;
 
 DROP TABLE raw_table;
 DROP TABLE summary_table;

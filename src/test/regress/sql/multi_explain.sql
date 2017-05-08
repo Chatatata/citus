@@ -465,3 +465,21 @@ ALTER TABLE explain_table ADD COLUMN value int;
 EXPLAIN (COSTS FALSE) SELECT value FROM explain_table WHERE id = 1;
 
 ROLLBACK;
+
+-- test explain with local INSERT ... SELECT
+EXPLAIN (COSTS OFF)
+INSERT INTO lineitem_hash_part
+SELECT o_orderkey FROM orders_hash_part LIMIT 3;
+
+SELECT true AS valid FROM explain_json($$
+  INSERT INTO lineitem_hash_part (l_orderkey)
+  SELECT o_orderkey FROM orders_hash_part LIMIT 3;
+$$);
+
+EXPLAIN (COSTS OFF)
+INSERT INTO lineitem_hash_part (l_orderkey, l_quantity)
+SELECT o_orderkey, 5 FROM orders_hash_part LIMIT 3;
+
+EXPLAIN (COSTS OFF)
+INSERT INTO lineitem_hash_part (l_orderkey)
+SELECT s FROM generate_series(1,5) s;
