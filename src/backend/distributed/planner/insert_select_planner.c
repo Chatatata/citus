@@ -47,11 +47,8 @@ CreateCoordinatorInsertSelectPlan(Query *parse)
 {
 	Query *insertSelectQuery = copyObject(parse);
 
-	RangeTblRef *reference = linitial(insertSelectQuery->jointree->fromlist);
-	RangeTblEntry *subqueryRte = rt_fetch(reference->rtindex,
-										  insertSelectQuery->rtable);
-	RangeTblEntry *insertRte = rt_fetch(insertSelectQuery->resultRelation,
-										insertSelectQuery->rtable);
+	RangeTblEntry *subqueryRte = ExtractSelectRangeTableEntry(insertSelectQuery);
+	RangeTblEntry *insertRte = ExtractInsertRangeTableEntry(insertSelectQuery);
 	Oid targetRelationId = insertRte->relid;
 
 	Query *subquery = (Query *) subqueryRte->subquery;
@@ -168,8 +165,7 @@ ErrorIfCoordinatorInsertSelectUnsupported(Query *insertSelectQuery)
 							 "coordinator", NULL, NULL);
 	}
 
-	insertRte = rt_fetch(insertSelectQuery->resultRelation, insertSelectQuery->rtable);
-
+	insertRte = ExtractInsertRangeTableEntry(insertSelectQuery);
 	if (PartitionMethod(insertRte->relid) == DISTRIBUTE_BY_APPEND)
 	{
 		return DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
