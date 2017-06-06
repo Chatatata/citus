@@ -131,7 +131,7 @@ CreateCoordinatorInsertSelectPlan(Query *parse)
 		/*
 		 * If the type in the target list does not match the type of the column,
 		 * we need to cast to the column type. PostgreSQL would do this
-		 * automatically during the insert, but we're passing the the SELECT
+		 * automatically during the insert, but we're passing the SELECT
 		 * output directly to COPY.
 		 */
 		if (columnType != selectOutputType)
