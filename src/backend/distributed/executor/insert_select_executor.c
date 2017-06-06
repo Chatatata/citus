@@ -34,7 +34,8 @@
 
 static void ExecuteSelectIntoRelation(Oid targetRelationId, List *insertTargetList,
 									  Query *selectQuery, EState *executorState);
-static void ExecuteQuery(Query *query, ParamListInfo params, DestReceiver *dest);
+static void ExecuteIntoDestReceiver(Query *query, ParamListInfo params,
+									DestReceiver *dest);
 
 
 /*
@@ -102,18 +103,18 @@ ExecuteSelectIntoRelation(Oid targetRelationId, List *insertTargetList,
 	copyDest = CreateCitusCopyDestReceiver(targetRelationId, columnNameList,
 										   executorState, stopOnFailure);
 
-	ExecuteQuery(selectQuery, paramListInfo, (DestReceiver *) copyDest);
+	ExecuteIntoDestReceiver(selectQuery, paramListInfo, (DestReceiver *) copyDest);
 
 	executorState->es_processed = copyDest->tuplesSent;
 }
 
 
 /*
- * ExecuteQuery plans and executes a query and sends results to the given
+ * ExecuteIntoDestReceiver plans and executes a query and sends results to the given
  * DestReceiver.
  */
 static void
-ExecuteQuery(Query *query, ParamListInfo params, DestReceiver *dest)
+ExecuteIntoDestReceiver(Query *query, ParamListInfo params, DestReceiver *dest)
 {
 	PlannedStmt *queryPlan = NULL;
 	Portal portal = NULL;
