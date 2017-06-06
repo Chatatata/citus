@@ -10,6 +10,7 @@
 
 #include "postgres.h"
 
+#include "distributed/errormessage.h"
 #include "distributed/insert_select_planner.h"
 #include "distributed/multi_executor.h"
 #include "distributed/multi_logical_planner.h"
@@ -31,6 +32,8 @@ struct DecrementCTELevelsContext
 };
 
 
+static DeferredErrorMessage * ErrorIfCoordinatorInsertSelectUnsupported(
+	Query *insertSelectQuery);
 static bool DecrementCTELevelsWalker(Node *node,
 									 struct DecrementCTELevelsContext *context);
 
@@ -59,30 +62,12 @@ CreateCoordinatorInsertSelectPlan(Query *parse)
 	MultiPlan *multiPlan = CitusMakeNode(MultiPlan);
 	multiPlan->operation = CMD_INSERT;
 
-	if (list_length(insertSelectQuery->returningList) > 0)
-	{
-		multiPlan->planningError =
-			DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
-						  "RETURNING is not supported in INSERT ... SELECT via coordinator",
-						  NULL, NULL);
+	multiPlan->planningError =
+		ErrorIfCoordinatorInsertSelectUnsupported(insertSelectQuery);
 
+	if (multiPlan->planningError != NULL)
+	{
 		return multiPlan;
-	}
-
-	if (insertSelectQuery->onConflict)
-	{
-		multiPlan->planningError =
-			DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
-						  "ON CONFLICT is not supported in INSERT ... SELECT via coordinator",
-						  NULL, NULL);
-	}
-
-	if (PartitionMethod(targetRelationId) == DISTRIBUTE_BY_APPEND)
-	{
-		multiPlan->planningError =
-			DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
-						  "INSERT ... SELECT into an append-distributed table is not supported",
-						  NULL, NULL);
 	}
 
 	if (list_length(insertSelectQuery->cteList) > 0)
@@ -155,6 +140,44 @@ CreateCoordinatorInsertSelectPlan(Query *parse)
 	multiPlan->targetRelationId = targetRelationId;
 
 	return multiPlan;
+}
+
+
+/*
+ * ErrorIfCoordinatorInsertSelectUnsupported returns an error if executing an
+ * INSERT ... SELECT command by pulling results of the SELECT to the coordinator
+ * is unsupported because it uses RETURNING, ON CONFLICT, or an append-distributed
+ * table.
+ */
+static DeferredErrorMessage *
+ErrorIfCoordinatorInsertSelectUnsupported(Query *insertSelectQuery)
+{
+	RangeTblEntry *insertRte = NULL;
+
+	if (list_length(insertSelectQuery->returningList) > 0)
+	{
+		return DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
+							 "RETURNING is not supported in INSERT ... SELECT via "
+							 "coordinator", NULL, NULL);
+	}
+
+	if (insertSelectQuery->onConflict)
+	{
+		return DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
+							 "ON CONFLICT is not supported in INSERT ... SELECT via "
+							 "coordinator", NULL, NULL);
+	}
+
+	insertRte = rt_fetch(insertSelectQuery->resultRelation, insertSelectQuery->rtable);
+
+	if (PartitionMethod(insertRte->relid) == DISTRIBUTE_BY_APPEND)
+	{
+		return DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
+							 "INSERT ... SELECT into an append-distributed table is "
+							 "not supported", NULL, NULL);
+	}
+
+	return NULL;
 }
 
 
