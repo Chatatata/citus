@@ -58,7 +58,7 @@ CoordinatorInsertSelectExecScan(CustomScanState *node)
 		List *insertTargetList = multiPlan->insertTargetList;
 		Oid targetRelationId = multiPlan->targetRelationId;
 
-		ereport(DEBUG1, (errmsg("Collecting INSERT ... SELECT results locally")));
+		ereport(DEBUG1, (errmsg("Collecting INSERT ... SELECT results on coordinator")));
 
 		ExecuteSelectIntoRelation(targetRelationId, insertTargetList, selectQuery,
 								  executorState);

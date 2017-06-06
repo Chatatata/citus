@@ -271,7 +271,7 @@ BEGIN;
 SET LOCAL client_min_messages TO DEBUG;
 INSERT INTO mx_table_2 SELECT * FROM mx_table;
 DEBUG:  distributed INSERT ... SELECT can only be performed from the coordinator
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 END;
 SELECT count(*) FROM mx_table_2;
  count 

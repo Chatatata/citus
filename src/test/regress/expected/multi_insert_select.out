@@ -632,7 +632,7 @@ INSERT INTO agg_events (value_1_agg, user_id)
   FROM
     raw_events_first;
 DEBUG:  DISTINCT ON clauses are not allowed in distributed INSERT ... SELECT queries
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ERROR:  could not run distributed query with DISTINCT clause
 HINT:  Consider using an equality filter on the distributed table's partition column.
 -- We do not support some CTEs
@@ -645,7 +645,7 @@ INSERT INTO agg_events
             FROM
               fist_table_agg;
 DEBUG:  distributed INSERT ... SELECT can only insert from distributed tables
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ERROR:  could not run distributed query with complex table expressions
 HINT:  Consider using an equality filter on the distributed table's partition column.
 -- We don't support CTEs that consist of const values as well
@@ -656,7 +656,7 @@ INSERT INTO agg_events
   FROM
     raw_events_first;
 DEBUG:  Subqueries without relations are not allowed in distributed INSERT ... SELECT queries
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ERROR:  could not run distributed query with common table expressions
 HINT:  Consider using an equality filter on the distributed table's partition column.
 -- We support set operations via the coordinator
@@ -669,7 +669,7 @@ FROM
   ((SELECT user_id FROM raw_events_first) UNION
    (SELECT user_id FROM raw_events_second)) as foo;
 DEBUG:  Set operations are not allowed in distributed INSERT ... SELECT queries
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ROLLBACK;
 -- We do not support any set operations
 INSERT INTO
@@ -677,7 +677,7 @@ INSERT INTO
   (SELECT user_id FROM raw_events_first) INTERSECT
   (SELECT user_id FROM raw_events_first);
 DEBUG:  Set operations are not allowed in distributed INSERT ... SELECT queries
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ERROR:  could not run distributed query with UNION, INTERSECT, or EXCEPT
 HINT:  Consider using an equality filter on the distributed table's partition column.
 -- If the query is router plannable then it is executed via the coordinator
@@ -689,7 +689,7 @@ FROM
   ((SELECT user_id FROM raw_events_first WHERE user_id = 15) EXCEPT
    (SELECT user_id FROM raw_events_second where user_id = 17)) as foo;
 DEBUG:  Set operations are not allowed in distributed INSERT ... SELECT queries
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 DEBUG:  Creating router plan
 DEBUG:  Plan is router executable
 -- some supported LEFT joins
@@ -1032,7 +1032,7 @@ FROM   (SELECT SUM(raw_events_second.value_4) AS v4,
         GROUP  BY raw_events_second.value_3) AS foo;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  The data type of the target table's partition column should exactly match the data type of the corresponding simple column reference in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ERROR:  cannot push down this subquery
 DETAIL:  Group by list without partition column is currently unsupported
 -- error cases
@@ -1043,7 +1043,7 @@ SELECT value_1
 FROM   raw_events_first;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  the query doesn't include the target table's partition column
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ERROR:  the partition column of table public.raw_events_second should have a value
 INSERT INTO raw_events_second
             (value_1)
@@ -1051,7 +1051,7 @@ SELECT user_id
 FROM   raw_events_first;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  the query doesn't include the target table's partition column
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ERROR:  the partition column of table public.raw_events_second should have a value
 INSERT INTO raw_events_second
             (user_id)
@@ -1059,7 +1059,7 @@ SELECT value_1
 FROM   raw_events_first;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT becuase the partition columns in the source table and subquery do not match
 DETAIL:  The target table's partition column should correspond to a partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ERROR:  the partition column of table public.raw_events_second should have a value
 INSERT INTO raw_events_second
             (user_id)
@@ -1068,7 +1068,7 @@ FROM   raw_events_first;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  Subquery contains an operator in the same position as the target table's partition column.
 HINT:  Ensure the target table's partition column has a corresponding simple column reference to a distributed table's partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 INSERT INTO raw_events_second
             (user_id)
 SELECT user_id :: bigint
@@ -1076,7 +1076,7 @@ FROM   raw_events_first;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  Subquery contains an explicit cast in the same position as the target table's partition column.
 HINT:  Ensure the target table's partition column has a corresponding simple column reference to a distributed table's partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 INSERT INTO agg_events
             (value_3_agg,
              value_4_agg,
@@ -1093,7 +1093,7 @@ GROUP  BY user_id;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  Subquery contains an aggregation in the same position as the target table's partition column.
 HINT:  Ensure the target table's partition column has a corresponding simple column reference to a distributed table's partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ERROR:  the partition column of table public.agg_events should have a value
 INSERT INTO agg_events
             (value_3_agg,
@@ -1111,7 +1111,7 @@ GROUP  BY user_id,
           value_2;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT becuase the partition columns in the source table and subquery do not match
 DETAIL:  The target table's partition column should correspond to a partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ERROR:  the partition column of table public.agg_events should have a value
 -- tables should be co-located
 INSERT INTO agg_events (user_id)
@@ -1121,7 +1121,7 @@ FROM
   reference_table;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT becuase the partition columns in the source table and subquery do not match
 DETAIL:  The target table's partition column should correspond to a partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 DEBUG:  Creating router plan
 DEBUG:  Plan is router executable
 -- unsupported joins between subqueries
@@ -1151,7 +1151,7 @@ ON (f.id = f2.id);
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  Subquery contains an expression that is not a simple column reference in the same position as the target table's partition column.
 HINT:  Ensure the target table's partition column has a corresponding simple column reference to a distributed table's partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ERROR:  cannot pushdown the subquery since all relations are not joined using distribution keys
 DETAIL:  Each relation should be joined with at least one another relation using distribution keys and equality operator.
 -- the second part of the query is not routable since
@@ -1589,7 +1589,7 @@ SELECT user_id,
 FROM   raw_events_second
 GROUP  BY grouping sets ( ( user_id ), ( value_1 ), ( user_id, value_1 ), ( ) );
 DEBUG:  grouping sets are not allowed in distributed INSERT ... SELECT queries
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ERROR:  could not run distributed query with GROUPING SETS, CUBE, or ROLLUP
 HINT:  Consider using an equality filter on the distributed table's partition column.
 -- set back to INFO
@@ -1970,51 +1970,51 @@ FROM text_table ;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  Subquery contains a case expression in the same position as the target table's partition column.
 HINT:  Ensure the target table's partition column has a corresponding simple column reference to a distributed table's partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 INSERT INTO text_table (part_col) SELECT COALESCE(part_col, 'onder') FROM text_table;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  Subquery contains a coalesce expression in the same position as the target table's partition column.
 HINT:  Ensure the target table's partition column has a corresponding simple column reference to a distributed table's partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 INSERT INTO text_table (part_col) SELECT GREATEST(part_col, 'jason') FROM text_table;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  Subquery contains a min/max expression in the same position as the target table's partition column.
 HINT:  Ensure the target table's partition column has a corresponding simple column reference to a distributed table's partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 INSERT INTO text_table (part_col) SELECT LEAST(part_col, 'andres') FROM text_table;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  Subquery contains a min/max expression in the same position as the target table's partition column.
 HINT:  Ensure the target table's partition column has a corresponding simple column reference to a distributed table's partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 INSERT INTO text_table (part_col) SELECT NULLIF(part_col, 'metin') FROM text_table;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  Subquery contains an expression that is not a simple column reference in the same position as the target table's partition column.
 HINT:  Ensure the target table's partition column has a corresponding simple column reference to a distributed table's partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 INSERT INTO text_table (part_col) SELECT part_col isnull FROM text_table;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  Subquery contains an expression that is not a simple column reference in the same position as the target table's partition column.
 HINT:  Ensure the target table's partition column has a corresponding simple column reference to a distributed table's partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 INSERT INTO text_table (part_col) SELECT part_col::text from char_table;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  Subquery contains an explicit coercion in the same position as the target table's partition column.
 HINT:  Ensure the target table's partition column has a corresponding simple column reference to a distributed table's partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 INSERT INTO text_table (part_col) SELECT (part_col = 'burak') is true FROM text_table;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  Subquery contains an expression that is not a simple column reference in the same position as the target table's partition column.
 HINT:  Ensure the target table's partition column has a corresponding simple column reference to a distributed table's partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 INSERT INTO text_table (part_col) SELECT val FROM text_table;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  The data type of the target table's partition column should exactly match the data type of the corresponding simple column reference in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 INSERT INTO text_table (part_col) SELECT val::text FROM text_table;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  Subquery contains an explicit coercion in the same position as the target table's partition column.
 HINT:  Ensure the target table's partition column has a corresponding simple column reference to a distributed table's partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 RESET client_min_messages;
 insert into table_with_starts_with_defaults (b,c) select b,c FROM table_with_starts_with_defaults;
 -- Test on partition column without native hash function 
@@ -2071,7 +2071,7 @@ SELECT
 FROM
   generate_series(1, 5) s;
 DEBUG:  distributed INSERT ... SELECT can only insert from distributed tables
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 SELECT user_id, value_1 FROM raw_events_first ORDER BY user_id, value_1;
  user_id | value_1 
 ---------+---------

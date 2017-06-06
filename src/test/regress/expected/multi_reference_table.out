@@ -1106,7 +1106,7 @@ FROM
 WHERE
 	colocated_table_test.value_1 = colocated_table_test_2.value_1;
 DEBUG:  only reference tables may be queried when targeting a reference table with distributed INSERT ... SELECT
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 -- should go via coordinator, same as the above
 INSERT INTO
 	reference_table_test (value_1)
@@ -1117,7 +1117,7 @@ FROM
 WHERE
 	colocated_table_test.value_1 = reference_table_test.value_1;
 DEBUG:  only reference tables may be queried when targeting a reference table with distributed INSERT ... SELECT
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 -- now, insert into the hash partitioned table and use reference 
 -- tables in the SELECT queries
 INSERT INTO
@@ -1162,7 +1162,7 @@ WHERE
 	colocated_table_test_2.value_4 = reference_table_test.value_4;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT because the partition columns in the source table and subquery do not match
 DETAIL:  The data type of the target table's partition column should exactly match the data type of the corresponding simple column reference in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 INSERT INTO
 	colocated_table_test (value_1, value_2)
 SELECT
@@ -1173,7 +1173,7 @@ WHERE
 	colocated_table_test_2.value_4 = reference_table_test.value_4;
 DEBUG:  cannot perform distributed INSERT INTO ... SELECT becuase the partition columns in the source table and subquery do not match
 DETAIL:  The target table's partition column should correspond to a partition column in the subquery.
-DEBUG:  Collecting INSERT ... SELECT results locally
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
 RESET client_min_messages;
 -- some tests for mark_tables_colocated
 -- should error out
