@@ -1679,6 +1679,24 @@ RETURNING *;
 
 RESET client_min_messages;
 
+-- INSERT ... SELECT and multi-shard SELECT in the same transaction is unsupported
+TRUNCATE raw_events_first;
+
+BEGIN;
+INSERT INTO raw_events_first (user_id, value_1)
+SELECT s, s FROM generate_series(1, 5) s;
+SELECT user_id, value_1 FROM raw_events_first;
+ROLLBACK;
+
+-- INSERT ... SELECT and single-shard SELECT in the same transaction is supported
+TRUNCATE raw_events_first;
+
+BEGIN;
+INSERT INTO raw_events_first (user_id, value_1)
+SELECT s, s FROM generate_series(1, 5) s;
+SELECT user_id, value_1 FROM raw_events_first WHERE user_id = 1;
+COMMIT;
+
 -- Select from local table
 TRUNCATE raw_events_first;
 

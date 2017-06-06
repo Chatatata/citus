@@ -106,6 +106,8 @@ ExecuteSelectIntoRelation(Oid targetRelationId, List *insertTargetList,
 	ExecuteIntoDestReceiver(selectQuery, paramListInfo, (DestReceiver *) copyDest);
 
 	executorState->es_processed = copyDest->tuplesSent;
+
+	XactModificationLevel = XACT_MODIFICATION_DATA;
 }
 
 
