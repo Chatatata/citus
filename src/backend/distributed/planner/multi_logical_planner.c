@@ -2663,7 +2663,11 @@ NeedsDistributedPlanning(Query *queryTree)
 		return false;
 	}
 
-	if (InsertSelectQuery(queryTree))
+	/*
+	 * We can handle INSERT INTO distributed_table SELECT ... even if the SELECT
+	 * part references local tables, so skip the remaining checks.
+	 */
+	if (InsertSelectIntoDistributedTable(queryTree))
 	{
 		return true;
 	}

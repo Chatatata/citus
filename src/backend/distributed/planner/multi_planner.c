@@ -279,7 +279,7 @@ CreateDistributedPlan(PlannedStmt *localPlan, Query *originalQuery, Query *query
 
 	if (IsModifyCommand(query))
 	{
-		if (InsertSelectQuery(originalQuery))
+		if (InsertSelectIntoDistributedTable(originalQuery))
 		{
 			distributedPlan = CreateDistributedInsertSelectPlan(originalQuery,
 																plannerRestrictionContext);

@@ -741,9 +741,12 @@ ExtractSelectRangeTableEntry(Query *query)
 	RangeTblRef *reference = NULL;
 	RangeTblEntry *subqueryRte = NULL;
 
-	Assert(InsertSelectQuery(query));
+	Assert(InsertSelectIntoDistributedTable(query));
 
-	/* since we already asserted InsertSelectQuery() it is safe to access both lists */
+	/*
+	 * Since we already asserted InsertSelectIntoDistributedTable() it is safe to access
+	 * both lists
+	 */
 	fromList = query->jointree->fromlist;
 	reference = linitial(fromList);
 	subqueryRte = rt_fetch(reference->rtindex, query->rtable);
@@ -786,7 +789,7 @@ InsertSelectQuerySupported(Query *queryTree, RangeTblEntry *insertRte,
 	DeferredErrorMessage *error = NULL;
 
 	/* we only do this check for INSERT ... SELECT queries */
-	AssertArg(InsertSelectQuery(queryTree));
+	AssertArg(InsertSelectIntoDistributedTable(queryTree));
 
 	if (GetLocalGroupId() != 0)
 	{
@@ -2756,7 +2759,7 @@ ReorderInsertSelectTargetLists(Query *originalQuery, RangeTblEntry *insertRte,
 	int subqueryTargetLength = 0;
 	int targetEntryIndex = 0;
 
-	AssertArg(InsertSelectQuery(originalQuery));
+	AssertArg(InsertSelectIntoDistributedTable(originalQuery));
 
 	subquery = subqueryRte->subquery;
 
@@ -2892,8 +2895,9 @@ ReorderInsertSelectTargetLists(Query *originalQuery, RangeTblEntry *insertRte,
 
 
 /*
- * InsertSelectQuery returns true when the input query
- * is INSERT INTO ... SELECT kind of query.
+ * InsertSelectIntoDistributedTable returns true when the input query is an
+ * INSERT INTO ... SELECT kind of query and the target is a distributed
+ * table.
  *
  * Note that the input query should be the original parsetree of
  * the query (i.e., not passed trough the standard planner).
@@ -2902,7 +2906,7 @@ ReorderInsertSelectTargetLists(Query *originalQuery, RangeTblEntry *insertRte,
  * rewrite/rewriteManip.c.
  */
 bool
-InsertSelectQuery(Query *query)
+InsertSelectIntoDistributedTable(Query *query)
 {
 	CmdType commandType = query->commandType;
 	List *fromList = NULL;
