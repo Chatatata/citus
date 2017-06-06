@@ -791,6 +791,16 @@ InsertSelectQuerySupported(Query *queryTree, RangeTblEntry *insertRte,
 	/* we only do this check for INSERT ... SELECT queries */
 	AssertArg(InsertSelectIntoDistributedTable(queryTree));
 
+	subquery = subqueryRte->subquery;
+
+	if (!NeedsDistributedPlanning(subquery))
+	{
+		return DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
+							 "distributed INSERT ... SELECT can only insert from "
+							 "distributed tables",
+							 NULL, NULL);
+	}
+
 	if (GetLocalGroupId() != 0)
 	{
 		return DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
@@ -811,8 +821,6 @@ InsertSelectQuerySupported(Query *queryTree, RangeTblEntry *insertRte,
 								 NULL, NULL);
 		}
 	}
-
-	subquery = subqueryRte->subquery;
 
 	if (contain_volatile_functions((Node *) queryTree))
 	{
@@ -867,14 +875,6 @@ InsertSelectQuerySupported(Query *queryTree, RangeTblEntry *insertRte,
 								 "column value must be colocated in distributed INSERT ... SELECT",
 								 NULL, NULL);
 		}
-	}
-
-	if (!NeedsDistributedPlanning(subquery))
-	{
-		return DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
-							 "Distributed INSERT ... SELECT can only insert from "
-							 "distributed tables",
-							 NULL, NULL);
 	}
 
 	return NULL;
