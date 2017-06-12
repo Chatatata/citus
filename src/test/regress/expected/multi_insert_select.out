@@ -644,7 +644,7 @@ INSERT INTO agg_events
               v1_agg, user_id
             FROM
               fist_table_agg;
-DEBUG:  distributed INSERT ... SELECT can only insert from distributed tables
+DEBUG:  distributed INSERT ... SELECT can only select from distributed tables
 DEBUG:  Collecting INSERT ... SELECT results on coordinator
 ERROR:  could not run distributed query with complex table expressions
 HINT:  Consider using an equality filter on the distributed table's partition column.
@@ -2071,7 +2071,7 @@ SELECT
   s, nextval('insert_select_test_seq'), (random()*10)::int
 FROM
   generate_series(1, 5) s;
-DEBUG:  distributed INSERT ... SELECT can only insert from distributed tables
+DEBUG:  distributed INSERT ... SELECT can only select from distributed tables
 DEBUG:  Collecting INSERT ... SELECT results on coordinator
 SELECT user_id, value_1 FROM raw_events_first ORDER BY user_id, value_1;
  user_id | value_1 
@@ -2087,13 +2087,13 @@ SELECT user_id, value_1 FROM raw_events_first ORDER BY user_id, value_1;
 INSERT INTO raw_events_first (user_id, value_1)
 SELECT s, nextval('insert_select_test_seq') FROM generate_series(1, 5) s
 ON CONFLICT DO NOTHING;
-DEBUG:  distributed INSERT ... SELECT can only insert from distributed tables
+DEBUG:  distributed INSERT ... SELECT can only select from distributed tables
 ERROR:  ON CONFLICT is not supported in INSERT ... SELECT via coordinator
 -- RETURNING is unsupported
 INSERT INTO raw_events_first (user_id, value_1)
 SELECT s, nextval('insert_select_test_seq') FROM generate_series(1, 5) s
 RETURNING *;
-DEBUG:  distributed INSERT ... SELECT can only insert from distributed tables
+DEBUG:  distributed INSERT ... SELECT can only select from distributed tables
 ERROR:  RETURNING is not supported in INSERT ... SELECT via coordinator
 RESET client_min_messages;
 -- INSERT ... SELECT and multi-shard SELECT in the same transaction is unsupported

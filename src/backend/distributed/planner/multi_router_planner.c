@@ -796,7 +796,7 @@ InsertSelectQuerySupported(Query *queryTree, RangeTblEntry *insertRte,
 	if (!NeedsDistributedPlanning(subquery))
 	{
 		return DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
-							 "distributed INSERT ... SELECT can only insert from "
+							 "distributed INSERT ... SELECT can only select from "
 							 "distributed tables",
 							 NULL, NULL);
 	}
