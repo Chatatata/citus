@@ -18,6 +18,7 @@
 
 #include "access/xact.h"
 #include "libpq/pqsignal.h"
+#include "distributed/deadlock.h"
 #include "distributed/maintenanced.h"
 #include "distributed/metadata_cache.h"
 #include "postmaster/bgworker.h"
@@ -146,6 +147,22 @@ CitusMaintenanceDaemonMain(Datum main_arg)
 
 
 		CHECK_FOR_INTERRUPTS();
+
+		{
+			Datum foundDeadlock;
+
+			StartTransactionCommand();
+			foundDeadlock = this_machine_kills_deadlocks(NULL);
+			CommitTransactionCommand();
+
+			/*
+			 * Check sooner if we just found a deadlock.
+			 */
+			if (foundDeadlock)
+			{
+				timeout = 100;
+			}
+		}
 
 		rc = WaitLatch(MyLatch, latchFlags, timeout);
 
