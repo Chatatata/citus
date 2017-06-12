@@ -33,7 +33,7 @@ struct DecrementCTELevelsContext
 };
 
 
-static DeferredErrorMessage * ErrorIfCoordinatorInsertSelectUnsupported(
+static DeferredErrorMessage * DeferErrorIfCoordinatorInsertSelectUnsupported(
 	Query *insertSelectQuery);
 static bool DecrementCTELevelsWalker(Node *node,
 									 struct DecrementCTELevelsContext *context);
@@ -61,7 +61,7 @@ CreateCoordinatorInsertSelectPlan(Query *parse)
 	multiPlan->operation = CMD_INSERT;
 
 	multiPlan->planningError =
-		ErrorIfCoordinatorInsertSelectUnsupported(insertSelectQuery);
+		DeferErrorIfCoordinatorInsertSelectUnsupported(insertSelectQuery);
 
 	if (multiPlan->planningError != NULL)
 	{
@@ -145,7 +145,7 @@ CreateCoordinatorInsertSelectPlan(Query *parse)
  * table.
  */
 static DeferredErrorMessage *
-ErrorIfCoordinatorInsertSelectUnsupported(Query *insertSelectQuery)
+DeferErrorIfCoordinatorInsertSelectUnsupported(Query *insertSelectQuery)
 {
 	RangeTblEntry *insertRte = NULL;
 	RangeTblEntry *subqueryRte = NULL;
