@@ -193,6 +193,7 @@ void
 StartupCitusBackend(void)
 {
 	InitializeMaintenanceDaemonBackend();
+	InitializeTransactionManagementBackend();
 }
 
 
