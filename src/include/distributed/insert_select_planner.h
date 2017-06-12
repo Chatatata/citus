@@ -10,7 +10,8 @@
  *-------------------------------------------------------------------------
  */
 
-#pragma once
+#ifndef INSERT_SELECT_PLANNER_H
+#define INSERT_SELECT_PLANNER_H
 
 
 #include "postgres.h"
@@ -24,3 +25,5 @@
 extern MultiPlan * CreateCoordinatorInsertSelectPlan(Query *originalQuery);
 extern void CoordinatorInsertSelectExplainScan(CustomScanState *node, List *ancestors,
 											   struct ExplainState *es);
+
+#endif /* INSERT_SELECT_PLANNER_H */

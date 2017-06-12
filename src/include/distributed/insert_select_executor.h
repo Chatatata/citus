@@ -10,10 +10,14 @@
  *-------------------------------------------------------------------------
  */
 
-#pragma once
+#ifndef INSERT_SELECT_EXECUTOR_H
+#define INSERT_SELECT_EXECUTOR_H
 
 
 #include "executor/execdesc.h"
 
 
 extern TupleTableSlot * CoordinatorInsertSelectExecScan(CustomScanState *node);
+
+
+#endif /* INSERT_SELECT_EXECUTOR_H */
