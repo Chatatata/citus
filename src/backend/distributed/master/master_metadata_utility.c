@@ -794,12 +794,7 @@ InsertShardRow(Oid relationId, uint64 shardId, char storageType,
 	tupleDescriptor = RelationGetDescr(pgDistShard);
 	heapTuple = heap_form_tuple(tupleDescriptor, values, isNulls);
 
-#if (PG_VERSION_NUM >= 100000)
 	CatalogTupleInsert(pgDistShard, heapTuple);
-#else
-	simple_heap_insert(pgDistShard, heapTuple);
-	CatalogUpdateIndexes(pgDistShard, heapTuple);
-#endif
 
 	/* invalidate previous cache entry and close relation */
 	CitusInvalidateRelcacheByRelid(relationId);
@@ -846,12 +841,7 @@ InsertShardPlacementRow(uint64 shardId, uint64 placementId,
 	tupleDescriptor = RelationGetDescr(pgDistShardPlacement);
 	heapTuple = heap_form_tuple(tupleDescriptor, values, isNulls);
 
-#if (PG_VERSION_NUM >= 100000)
 	CatalogTupleInsert(pgDistShardPlacement, heapTuple);
-#else
-	simple_heap_insert(pgDistShardPlacement, heapTuple);
-	CatalogUpdateIndexes(pgDistShardPlacement, heapTuple);
-#endif
 
 	CitusInvalidateRelcacheByShardId(shardId);
 
@@ -906,12 +896,7 @@ InsertIntoPgDistPartition(Oid relationId, char distributionMethod,
 	newTuple = heap_form_tuple(RelationGetDescr(pgDistPartition), newValues, newNulls);
 
 	/* finally insert tuple, build index entries & register cache invalidation */
-#if (PG_VERSION_NUM >= 100000)
 	CatalogTupleInsert(pgDistPartition, newTuple);
-#else
-	simple_heap_insert(pgDistPartition, newTuple);
-	CatalogUpdateIndexes(pgDistPartition, newTuple);
-#endif
 
 	CitusInvalidateRelcacheByRelid(relationId);
 
@@ -1169,12 +1154,7 @@ UpdateShardPlacementState(uint64 placementId, char shardState)
 
 	heapTuple = heap_modify_tuple(heapTuple, tupleDescriptor, values, isnull, replace);
 
-#if (PG_VERSION_NUM >= 100000)
 	CatalogTupleUpdate(pgDistShardPlacement, &heapTuple->t_self, heapTuple);
-#else
-	simple_heap_update(pgDistShardPlacement, &heapTuple->t_self, heapTuple);
-	CatalogUpdateIndexes(pgDistShardPlacement, heapTuple);
-#endif
 
 	shardId = DatumGetInt64(heap_getattr(heapTuple,
 										 Anum_pg_dist_shard_placement_shardid,
@@ -1240,12 +1220,7 @@ UpdateColocationGroupReplicationFactor(uint32 colocationId, int replicationFacto
 
 	newHeapTuple = heap_modify_tuple(heapTuple, tupleDescriptor, values, isnull, replace);
 
-#if (PG_VERSION_NUM >= 100000)
 	CatalogTupleUpdate(pgDistColocation, &newHeapTuple->t_self, newHeapTuple);
-#else
-	simple_heap_update(pgDistColocation, &newHeapTuple->t_self, newHeapTuple);
-	CatalogUpdateIndexes(pgDistColocation, newHeapTuple);
-#endif
 
 	CommandCounterIncrement();
 

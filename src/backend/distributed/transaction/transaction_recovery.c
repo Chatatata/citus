@@ -100,12 +100,7 @@ LogTransactionRecord(int groupId, char *transactionName)
 	tupleDescriptor = RelationGetDescr(pgDistTransaction);
 	heapTuple = heap_form_tuple(tupleDescriptor, values, isNulls);
 
-#if (PG_VERSION_NUM >= 100000)
 	CatalogTupleInsert(pgDistTransaction, heapTuple);
-#else
-	simple_heap_insert(pgDistTransaction, heapTuple);
-	CatalogUpdateIndexes(pgDistTransaction, heapTuple);
-#endif
 
 	CommandCounterIncrement();
 

@@ -626,12 +626,7 @@ SetNodeState(char *nodeName, int32 nodePort, bool isActive)
 
 	heapTuple = heap_modify_tuple(heapTuple, tupleDescriptor, values, isnull, replace);
 
-#if (PG_VERSION_NUM >= 100000)
 	CatalogTupleUpdate(pgDistNode, &heapTuple->t_self, heapTuple);
-#else
-	simple_heap_update(pgDistNode, &heapTuple->t_self, heapTuple);
-	CatalogUpdateIndexes(pgDistNode, heapTuple);
-#endif
 
 	CitusInvalidateRelcacheByRelid(DistNodeRelationId());
 	CommandCounterIncrement();
@@ -873,12 +868,7 @@ InsertNodeRow(int nodeid, char *nodeName, int32 nodePort, uint32 groupId, char *
 	tupleDescriptor = RelationGetDescr(pgDistNode);
 	heapTuple = heap_form_tuple(tupleDescriptor, values, isNulls);
 
-#if (PG_VERSION_NUM >= 100000)
 	CatalogTupleInsert(pgDistNode, heapTuple);
-#else
-	simple_heap_insert(pgDistNode, heapTuple);
-	CatalogUpdateIndexes(pgDistNode, heapTuple);
-#endif
 
 	/* close relation and invalidate previous cache entry */
 	heap_close(pgDistNode, AccessExclusiveLock);
