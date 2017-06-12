@@ -86,10 +86,17 @@ ExecuteSelectIntoRelation(Oid targetRelationId, List *insertTargetList,
 	ListCell *insertTargetCell = NULL;
 	List *columnNameList = NIL;
 	bool stopOnFailure = false;
+	char partitionMethod = 0;
 
 	CitusCopyDestReceiver *copyDest = NULL;
 
 	BeginOrContinueCoordinatedTransaction();
+
+	partitionMethod = PartitionMethod(targetRelationId);
+	if (partitionMethod == DISTRIBUTE_BY_NONE)
+	{
+		stopOnFailure = true;
+	}
 
 	/* build the list of column names for the COPY statement */
 	foreach(insertTargetCell, insertTargetList)
