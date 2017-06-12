@@ -132,7 +132,7 @@ CreateCoordinatorInsertSelectPlan(Query *parse)
 		}
 	}
 
-	multiPlan->insertSelectQuery = subquery;
+	multiPlan->insertSelectSubquery = subquery;
 	multiPlan->insertTargetList = insertSelectQuery->targetList;
 	multiPlan->targetRelationId = targetRelationId;
 

@@ -57,7 +57,7 @@ JobExecutorType(MultiPlan *multiPlan)
 		return MULTI_EXECUTOR_ROUTER;
 	}
 
-	if (multiPlan->insertSelectQuery != NULL)
+	if (multiPlan->insertSelectSubquery != NULL)
 	{
 		return MULTI_EXECUTOR_COORDINATOR_INSERT_SELECT;
 	}

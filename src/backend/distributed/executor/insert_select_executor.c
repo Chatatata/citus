@@ -54,7 +54,7 @@ CoordinatorInsertSelectExecScan(CustomScanState *node)
 	{
 		EState *executorState = scanState->customScanState.ss.ps.state;
 		MultiPlan *multiPlan = scanState->multiPlan;
-		Query *selectQuery = multiPlan->insertSelectQuery;
+		Query *selectQuery = multiPlan->insertSelectSubquery;
 		List *insertTargetList = multiPlan->insertTargetList;
 		Oid targetRelationId = multiPlan->targetRelationId;
 

@@ -728,7 +728,7 @@ CoordinatorInsertSelectExplainScan(CustomScanState *node, List *ancestors,
 {
 	CitusScanState *scanState = (CitusScanState *) node;
 	MultiPlan *multiPlan = scanState->multiPlan;
-	Query *query = multiPlan->insertSelectQuery;
+	Query *query = multiPlan->insertSelectSubquery;
 	IntoClause *into = NULL;
 	ParamListInfo params = NULL;
 	char *queryString = NULL;

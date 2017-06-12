@@ -222,7 +222,7 @@ typedef struct MultiPlan
 	bool routerExecutable;
 
 	/* INSERT ... SELECT via coordinator only */
-	Query *insertSelectQuery;
+	Query *insertSelectSubquery;
 	List *insertTargetList;
 	Oid targetRelationId;
 

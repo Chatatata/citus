@@ -191,7 +191,7 @@ ReadMultiPlan(READFUNC_ARGS)
 	READ_NODE_FIELD(masterQuery);
 	READ_BOOL_FIELD(routerExecutable);
 
-	READ_NODE_FIELD(insertSelectQuery);
+	READ_NODE_FIELD(insertSelectSubquery);
 	READ_NODE_FIELD(insertTargetList);
 	READ_OID_FIELD(targetRelationId);
 

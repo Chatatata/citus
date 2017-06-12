@@ -283,7 +283,7 @@ OutMultiPlan(OUTFUNC_ARGS)
 	WRITE_NODE_FIELD(masterQuery);
 	WRITE_BOOL_FIELD(routerExecutable);
 
-	WRITE_NODE_FIELD(insertSelectQuery);
+	WRITE_NODE_FIELD(insertSelectSubquery);
 	WRITE_NODE_FIELD(insertTargetList);
 	WRITE_OID_FIELD(targetRelationId);
 
