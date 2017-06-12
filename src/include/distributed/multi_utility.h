@@ -33,13 +33,13 @@ typedef struct DDLJob
 struct QueryEnvironment; /* forward-declare to appease compiler */
 #endif
 
-extern void multi_ProcessUtility10(PlannedStmt *pstmt, const char *queryString,
-								   ProcessUtilityContext context, ParamListInfo params,
-								   struct QueryEnvironment *queryEnv, DestReceiver *dest,
-								   char *completionTag);
-extern void multi_ProcessUtility(Node *parsetree, const char *queryString,
+extern void multi_ProcessUtility(PlannedStmt *pstmt, const char *queryString,
 								 ProcessUtilityContext context, ParamListInfo params,
-								 DestReceiver *dest, char *completionTag);
+								 struct QueryEnvironment *queryEnv, DestReceiver *dest,
+								 char *completionTag);
+extern void multi_ProcessUtility9x(Node *parsetree, const char *queryString,
+								   ProcessUtilityContext context, ParamListInfo params,
+								   DestReceiver *dest, char *completionTag);
 extern void CitusProcessUtility(Node *node, const char *queryString,
 								ProcessUtilityContext context, ParamListInfo params,
 								DestReceiver *dest, char *completionTag);

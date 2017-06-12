@@ -14,6 +14,7 @@
 #ifndef MASTER_METADATA_UTILITY_H
 #define MASTER_METADATA_UTILITY_H
 
+#include "access/heapam.h"
 #include "access/htup.h"
 #include "access/tupdesc.h"
 #include "catalog/indexing.h"
@@ -38,6 +39,7 @@ CatalogTupleUpdate(Relation heapRel, ItemPointer otid, HeapTuple tup)
 	CatalogUpdateIndexes(heapRel, tup);
 }
 
+
 static inline Oid
 CatalogTupleInsert(Relation heapRel, HeapTuple tup)
 {
@@ -46,6 +48,8 @@ CatalogTupleInsert(Relation heapRel, HeapTuple tup)
 
 	return oid;
 }
+
+
 #endif
 
 /* In-memory representation of a typed tuple in pg_dist_shard. */

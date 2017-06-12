@@ -163,23 +163,32 @@ static void PostProcessUtility(Node *parsetree);
 static bool warnedUserAbout2PC = false;
 
 
+/*
+ * multi_ProcessUtility9x is the 9.x-compatible wrapper for Citus' main utility
+ * hook. It simply adapts the old-style hook to call into the new-style (10+)
+ * hook, which is what now houses all actual logic.
+ */
 void
-multi_ProcessUtility(Node *parsetree,
-					 const char *queryString,
-					 ProcessUtilityContext context,
-					 ParamListInfo params,
-					 DestReceiver *dest,
-					 char *completionTag)
+multi_ProcessUtility9x(Node *parsetree,
+					   const char *queryString,
+					   ProcessUtilityContext context,
+					   ParamListInfo params,
+					   DestReceiver *dest,
+					   char *completionTag)
 {
 	PlannedStmt *plannedStmt = makeNode(PlannedStmt);
 	plannedStmt->commandType = CMD_UTILITY;
 	plannedStmt->utilityStmt = parsetree;
 
-	multi_ProcessUtility10(plannedStmt, queryString, context, params, NULL, dest,
-						   completionTag);
+	multi_ProcessUtility(plannedStmt, queryString, context, params, NULL, dest,
+						 completionTag);
 }
 
 
+/*
+ * CitusProcessUtility is a version-aware wrapper of ProcessUtility to account
+ * for argument differences between the 9.x and 10+ PostgreSQL versions.
+ */
 void
 CitusProcessUtility(Node *node, const char *queryString, ProcessUtilityContext context,
 					ParamListInfo params, DestReceiver *dest, char *completionTag)
@@ -207,13 +216,13 @@ CitusProcessUtility(Node *node, const char *queryString, ProcessUtilityContext c
  * TRUNCATE and VACUUM are also supported.
  */
 void
-multi_ProcessUtility10(PlannedStmt *pstmt,
-					   const char *queryString,
-					   ProcessUtilityContext context,
-					   ParamListInfo params,
-					   struct QueryEnvironment *queryEnv,
-					   DestReceiver *dest,
-					   char *completionTag)
+multi_ProcessUtility(PlannedStmt *pstmt,
+					 const char *queryString,
+					 ProcessUtilityContext context,
+					 ParamListInfo params,
+					 struct QueryEnvironment *queryEnv,
+					 DestReceiver *dest,
+					 char *completionTag)
 {
 	Node *parsetree = pstmt->utilityStmt;
 	bool commandMustRunAsOwner = false;
