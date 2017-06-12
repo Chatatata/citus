@@ -1937,6 +1937,7 @@ FROM
   table_with_defaults
 GROUP BY
   store_id;
+ERROR:  INSERT ... SELECT cannot generate sequence values when selecting from a distributed table
 -- do some more error/error message checks
 SET citus.shard_count TO 4;
 SET citus.shard_replication_factor TO 1;
@@ -2178,6 +2179,41 @@ SELECT user_id, value_1 FROM raw_events_first ORDER BY user_id, value_1;
 ---------+---------
        2 |       6
 (1 row)
+
+-- Select into distributed table with a sequence
+CREATE TABLE dist_table_with_sequence (user_id serial, value_1 serial);
+SELECT create_distributed_table('dist_table_with_sequence', 'user_id');
+ create_distributed_table 
+--------------------------
+ 
+(1 row)
+
+-- from local query
+INSERT INTO dist_table_with_sequence (value_1)
+SELECT s FROM generate_series(1,5) s;
+SELECT * FROM dist_table_with_sequence ORDER BY user_id;
+ user_id | value_1 
+---------+---------
+       1 |       1
+       2 |       2
+       3 |       3
+       4 |       4
+       5 |       5
+(5 rows)
+
+-- from a distributed query
+INSERT INTO dist_table_with_sequence (value_1)
+SELECT value_1 FROM dist_table_with_sequence;
+ERROR:  INSERT ... SELECT cannot generate sequence values when selecting from a distributed table
+SELECT * FROM dist_table_with_sequence ORDER BY user_id;
+ user_id | value_1 
+---------+---------
+       1 |       1
+       2 |       2
+       3 |       3
+       4 |       4
+       5 |       5
+(5 rows)
 
 -- Select from distributed table into reference table
 CREATE TABLE ref_table (user_id int, value_1 int);

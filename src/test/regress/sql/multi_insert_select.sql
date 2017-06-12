@@ -1743,6 +1743,22 @@ SELECT * FROM user_two;
 
 SELECT user_id, value_1 FROM raw_events_first ORDER BY user_id, value_1;
 
+-- Select into distributed table with a sequence
+CREATE TABLE dist_table_with_sequence (user_id serial, value_1 serial);
+SELECT create_distributed_table('dist_table_with_sequence', 'user_id');
+
+-- from local query
+INSERT INTO dist_table_with_sequence (value_1)
+SELECT s FROM generate_series(1,5) s;
+
+SELECT * FROM dist_table_with_sequence ORDER BY user_id;
+
+-- from a distributed query
+INSERT INTO dist_table_with_sequence (value_1)
+SELECT value_1 FROM dist_table_with_sequence;
+
+SELECT * FROM dist_table_with_sequence ORDER BY user_id;
+
 -- Select from distributed table into reference table
 CREATE TABLE ref_table (user_id int, value_1 int);
 SELECT create_reference_table('ref_table');

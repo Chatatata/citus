@@ -10,6 +10,7 @@
 
 #include "postgres.h"
 
+#include "distributed/citus_ruleutils.h"
 #include "distributed/errormessage.h"
 #include "distributed/insert_select_planner.h"
 #include "distributed/multi_executor.h"
@@ -150,6 +151,8 @@ static DeferredErrorMessage *
 ErrorIfCoordinatorInsertSelectUnsupported(Query *insertSelectQuery)
 {
 	RangeTblEntry *insertRte = NULL;
+	RangeTblEntry *subqueryRte = NULL;
+	Query *subquery = NULL;
 
 	if (list_length(insertSelectQuery->returningList) > 0)
 	{
@@ -171,6 +174,25 @@ ErrorIfCoordinatorInsertSelectUnsupported(Query *insertSelectQuery)
 		return DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
 							 "INSERT ... SELECT into an append-distributed table is "
 							 "not supported", NULL, NULL);
+	}
+
+	subqueryRte = ExtractSelectRangeTableEntry(insertSelectQuery);
+	subquery = (Query *) subqueryRte->subquery;
+	if (NeedsDistributedPlanning(subquery))
+	{
+		ListCell *insertTargetCell = NULL;
+		foreach(insertTargetCell, insertSelectQuery->targetList)
+		{
+			TargetEntry *insertTargetEntry = (TargetEntry *) lfirst(insertTargetCell);
+
+			if (contain_nextval_expression_walker((Node *) insertTargetEntry->expr, NULL))
+			{
+				return DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
+									 "INSERT ... SELECT cannot generate sequence values "
+									 "when selecting from a distributed table",
+									 NULL, NULL);
+			}
+		}
 	}
 
 	return NULL;
