@@ -1174,16 +1174,6 @@ InsertPartitionColumnMatchesSelect(Query *query, RangeTblEntry *insertRte,
 								 NULL);
 		}
 
-		/* if the table is not distributed we cannot push down INSERT..SELECT */
-		if (!IsDistributedTable(subqueryPartitionColumnRelationId))
-		{
-			return DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
-								 "Distributed INSERT INTO ... SELECT only supports "
-								 "selecting from another distributed table",
-								 NULL,
-								 NULL);
-		}
-
 		/* finally, check that the select target column is a partition column */
 		if (!IsPartitionColumn(selectTargetExpr, subquery))
 		{
