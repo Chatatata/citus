@@ -120,16 +120,13 @@ CreateCoordinatorInsertSelectPlan(Query *parse)
 		if (columnType != selectOutputType)
 		{
 			Expr *selectExpression = selectTargetEntry->expr;
-			Expr *typeCast = (Expr *) coerce_to_target_type(NULL,
-															(Node *) selectExpression,
-															selectOutputType,
-															columnType,
-															columnTypeMod,
-															COERCION_EXPLICIT,
-															COERCE_IMPLICIT_CAST,
-															-1);
+			Expr *typeCastedSelectExpr =
+				(Expr *) coerce_to_target_type(NULL, (Node *) selectExpression,
+											   selectOutputType, columnType,
+											   columnTypeMod, COERCION_EXPLICIT,
+											   COERCE_IMPLICIT_CAST, -1);
 
-			selectTargetEntry->expr = typeCast;
+			selectTargetEntry->expr = typeCastedSelectExpr;
 		}
 	}
 
