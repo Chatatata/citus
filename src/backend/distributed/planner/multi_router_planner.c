@@ -2665,6 +2665,8 @@ RouterQueryJob(Query *query, Task *task, List *placementList)
 	job->requiresMasterEvaluation = requiresMasterEvaluation;
 	job->deferredPruning = deferredPruning;
 
+	job->jobQuery->targetList = NIL;
+
 	return job;
 }
 
