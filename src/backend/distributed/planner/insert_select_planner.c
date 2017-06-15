@@ -175,21 +175,14 @@ DeferErrorIfCoordinatorInsertSelectUnsupported(Query *insertSelectQuery)
 
 	subqueryRte = ExtractSelectRangeTableEntry(insertSelectQuery);
 	subquery = (Query *) subqueryRte->subquery;
-	if (NeedsDistributedPlanning(subquery))
-	{
-		ListCell *insertTargetCell = NULL;
-		foreach(insertTargetCell, insertSelectQuery->targetList)
-		{
-			TargetEntry *insertTargetEntry = (TargetEntry *) lfirst(insertTargetCell);
 
-			if (contain_nextval_expression_walker((Node *) insertTargetEntry->expr, NULL))
-			{
-				return DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
-									 "INSERT ... SELECT cannot generate sequence values "
-									 "when selecting from a distributed table",
-									 NULL, NULL);
-			}
-		}
+	if (NeedsDistributedPlanning(subquery) &&
+		contain_nextval_expression_walker((Node *) insertSelectQuery->targetList, NULL))
+	{
+		return DeferredError(ERRCODE_FEATURE_NOT_SUPPORTED,
+							 "INSERT ... SELECT cannot generate sequence values when "
+							 "selecting from a distributed table",
+							 NULL, NULL);
 	}
 
 	return NULL;
