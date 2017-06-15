@@ -767,11 +767,16 @@ CitusExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
 		PlannedStmt *plan;
 		instr_time  planstart,
 					planduration;
+		int cursorOptions = 0;
 
 		INSTR_TIME_SET_CURRENT(planstart);
 
+		#if (PG_VERSION_NUM >= 90600)
+		cursorOptions = into ? 0 : CURSOR_OPT_PARALLEL_OK;
+		#endif
+
 		/* plan the query */
-		plan = pg_plan_query(query, into ? 0 : CURSOR_OPT_PARALLEL_OK, params);
+		plan = pg_plan_query(query, cursorOptions, params);
 
 		INSTR_TIME_SET_CURRENT(planduration);
 		INSTR_TIME_SUBTRACT(planduration, planstart);
