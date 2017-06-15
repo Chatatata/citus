@@ -270,6 +270,16 @@ DELETE FROM multiple_hash_mx WHERE category = '1' RETURNING category;
 SELECT * FROM multiple_hash_mx WHERE category = '1' ORDER BY category, data;
 SELECT * FROM multiple_hash_mx WHERE category = '2' ORDER BY category, data;
 
+--- INSERT ... SELECT ... FROM commands are supported from workers
+INSERT INTO multiple_hash_mx
+SELECT s, s*2 FROM generate_series(1,10) s;
+
+-- but are never distributed
+BEGIN;
+SET LOCAL client_min_messages TO DEBUG1;
+INSERT INTO multiple_hash_mx SELECT * FROM multiple_hash_mx;
+END;
+
 -- verify interaction of default values, SERIAL, and RETURNING
 \set QUIET on
 

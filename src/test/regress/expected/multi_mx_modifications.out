@@ -429,6 +429,21 @@ SELECT * FROM multiple_hash_mx WHERE category = '2' ORDER BY category, data;
 ----------+------
 (0 rows)
 
+--- INSERT ... SELECT ... FROM commands are supported from workers
+INSERT INTO multiple_hash_mx
+SELECT s, s*2 FROM generate_series(1,10) s;
+INSERT 0 10
+-- but are never distributed
+BEGIN;
+BEGIN
+SET LOCAL client_min_messages TO DEBUG1;
+SET
+INSERT INTO multiple_hash_mx SELECT * FROM multiple_hash_mx;
+DEBUG:  distributed INSERT ... SELECT can only be performed from the coordinator
+DEBUG:  Collecting INSERT ... SELECT results on coordinator
+INSERT 0 10
+END;
+COMMIT
 -- verify interaction of default values, SERIAL, and RETURNING
 \set QUIET on
 INSERT INTO app_analytics_events_mx VALUES (DEFAULT, 101, 'Fauxkemon Geaux') RETURNING id;
