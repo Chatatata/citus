@@ -771,7 +771,7 @@ CitusExplainOneQuery(Query *query, IntoClause *into, ExplainState *es,
 		INSTR_TIME_SET_CURRENT(planstart);
 
 		/* plan the query */
-		plan = pg_plan_query(query, 0, params);
+		plan = pg_plan_query(query, into ? 0 : CURSOR_OPT_PARALLEL_OK, params);
 
 		INSTR_TIME_SET_CURRENT(planduration);
 		INSTR_TIME_SUBTRACT(planduration, planstart);
