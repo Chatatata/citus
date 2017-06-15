@@ -70,7 +70,12 @@ FROM (
   GROUP BY  t1.user_id, hasdone_event
 ) t GROUP BY user_id, hasdone_event;
 -- get some statistics from the aggregated results to ensure the results are correct
--- SELECT count(*), count(DISTINCT user_id), avg(user_id) FROM agg_results;
+SELECT count(*), count(DISTINCT user_id), avg(user_id) FROM agg_results;
+ count | count |         avg         
+-------+-------+---------------------
+     8 |     8 | 16.1250000000000000
+(1 row)
+
 ------------------------------------
 ------------------------------------
 -- Funnel, grouped by the number of times a user has done an event
@@ -143,7 +148,12 @@ GROUP BY
 ORDER BY
   count_pay;
 -- get some statistics from the aggregated results to ensure the results are correct
--- SELECT count(*), count(DISTINCT user_id), avg(user_id) FROM agg_results;
+SELECT count(*), count(DISTINCT user_id), avg(user_id) FROM agg_results;
+ count | count |         avg         
+-------+-------+---------------------
+     8 |     8 | 45.0000000000000000
+(1 row)
+
 ------------------------------------
 ------------------------------------
 -- Most recently seen users_table events_table
