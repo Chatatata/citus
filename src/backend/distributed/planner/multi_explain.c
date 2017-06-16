@@ -328,16 +328,11 @@ RemoteExplain(Task *task, ExplainState *es)
 		/* run explain query */
 		executeResult = ExecuteOptionalRemoteCommand(connection, explainQuery->data,
 													 &queryResult);
-		if (executeResult != 0)
+		if (executeResult == 0)
 		{
-			PQclear(queryResult);
-			ForgetResults(connection);
-
-			continue;
+			/* read explain query results */
+			remotePlan->explainOutputList = ReadFirstColumnAsText(queryResult);
 		}
-
-		/* read explain query results */
-		remotePlan->explainOutputList = ReadFirstColumnAsText(queryResult);
 
 		PQclear(queryResult);
 		ForgetResults(connection);
